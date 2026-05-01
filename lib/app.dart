@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'core/constants/app_constants.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
+import 'features/farmers/screens/farmer_search_screen.dart';
 
 part 'app.g.dart';
 
@@ -48,9 +49,10 @@ GoRouter router(Ref ref) {
     redirect: notifier.redirect,
     routes: [
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+      GoRoute(path: '/farmers', builder: (_, _) => const FarmerSearchScreen()),
       GoRoute(
-        path: '/farmers',
-        builder: (_, _) => const _Placeholder('Farmer Search'),
+        path: '/farmers/new',
+        builder: (_, _) => const _Placeholder('Create Farmer'),
       ),
       GoRoute(
         path: '/farmers/:id',
