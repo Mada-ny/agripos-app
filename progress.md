@@ -10,7 +10,7 @@
 | Create Farmer | `/farmers/new` | Todo | — |
 | Product Browser | `/products` | Todo | — |
 | Order Checkout | `/orders/checkout` | Todo | — |
-| Record Repayment | `/repayments` | Todo | — |
+| Record Repayment | `/repayments` | Done | #5 |
 
 ## Foundation
 
