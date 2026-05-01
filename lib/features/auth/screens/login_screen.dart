@@ -16,6 +16,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   final _passwordFocusNode = FocusNode();
   bool _obscurePassword = true;
+  String? _validationError;
 
   @override
   void dispose() {
@@ -26,46 +27,173 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _submit() {
-    ref
-        .read(loginNotifierProvider.notifier)
-        .submit(_emailController.text.trim(), _passwordController.text);
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty) {
+      setState(() => _validationError = 'Email address is required.');
+      return;
+    }
+    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+      setState(() => _validationError = 'Please enter a valid email address.');
+      return;
+    }
+    if (password.isEmpty) {
+      setState(() => _validationError = 'Password is required.');
+      return;
+    }
+
+    setState(() => _validationError = null);
+    ref.read(loginNotifierProvider.notifier).submit(email, password);
+  }
+
+  String? _extractApiError(Object error) {
+    if (error is! AppException) return error.toString();
+    final emailErrors = error.errors?['email'];
+    if (emailErrors is List && emailErrors.isNotEmpty) {
+      return emailErrors.first.toString();
+    }
+    return error.message;
   }
 
   @override
   Widget build(BuildContext context) {
     final loginState = ref.watch(loginNotifierProvider);
     final isLoading = loginState.isLoading;
-    final errorMessage = loginState.hasError
-        ? (loginState.error is AppException
-              ? (loginState.error as AppException).message
-              : loginState.error.toString())
+    final apiError = loginState.hasError
+        ? _extractApiError(loginState.error!)
         : null;
+    final errorMessage = _validationError ?? apiError;
 
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 48),
-                _BrandSection(),
-                const SizedBox(height: 40),
-                _FormCard(
-                  emailController: _emailController,
-                  passwordController: _passwordController,
-                  passwordFocusNode: _passwordFocusNode,
-                  obscurePassword: _obscurePassword,
-                  isLoading: isLoading,
-                  errorMessage: errorMessage,
-                  onTogglePassword: () =>
-                      setState(() => _obscurePassword = !_obscurePassword),
-                  onSubmit: _submit,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _BrandRow(),
+              const SizedBox(height: 48),
+              const Text(
+                'Welcome back.',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF231a10),
+                  height: 1.2,
                 ),
-                const SizedBox(height: 32),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Sign in to manage farmer accounts and record sales.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF6b5d48),
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 36),
+              _LabeledField(
+                label: 'Email',
+                child: TextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  autocorrect: false,
+                  enabled: !isLoading,
+                  onSubmitted: (_) =>
+                      FocusScope.of(context).requestFocus(_passwordFocusNode),
+                  decoration: const InputDecoration(
+                    hintText: 'operator@coopcivoire.ci',
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              _LabeledField(
+                label: 'Password',
+                child: TextField(
+                  controller: _passwordController,
+                  focusNode: _passwordFocusNode,
+                  obscureText: _obscurePassword,
+                  textInputAction: TextInputAction.done,
+                  enabled: !isLoading,
+                  onSubmitted: (_) => _submit(),
+                  decoration: InputDecoration(
+                    hintText: '••••••••',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                      onPressed: isLoading
+                          ? null
+                          : () => setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+              if (errorMessage != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  errorMessage,
+                  style: const TextStyle(
+                    color: Color(0xFFb3321b),
+                    fontSize: 13,
+                  ),
+                ),
               ],
-            ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: isLoading ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Sign in',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Icon(Icons.chevron_right, size: 20),
+                          ],
+                        ),
+                ),
+              ),
+              const Spacer(),
+              Center(
+                child: Text(
+                  'Coopérative Agricole de Côte d\'Ivoire',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFFa89a82),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -73,125 +201,71 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 }
 
-class _BrandSection extends StatelessWidget {
+class _BrandRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Icon(
-          Icons.agriculture_rounded,
-          size: 64,
-          color: const Color(0xFF2d5d3a),
-        ),
-        const SizedBox(height: 12),
-        const Text(
-          'AgriPOS',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF231a10),
-            letterSpacing: -0.5,
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: const Color(0xFF2d5d3a),
+            borderRadius: BorderRadius.circular(12),
           ),
+          child: const Icon(Icons.eco_rounded, color: Colors.white, size: 26),
         ),
-        const SizedBox(height: 4),
-        const Text(
-          'Operator Portal',
-          style: TextStyle(fontSize: 14, color: Color(0xFF6b5d48)),
+        const SizedBox(width: 12),
+        const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'AgriPOS',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF231a10),
+              ),
+            ),
+            Text(
+              'FIELD OPERATOR',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF6b5d48),
+                letterSpacing: 0.8,
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 }
 
-class _FormCard extends StatelessWidget {
-  final TextEditingController emailController;
-  final TextEditingController passwordController;
-  final FocusNode passwordFocusNode;
-  final bool obscurePassword;
-  final bool isLoading;
-  final String? errorMessage;
-  final VoidCallback onTogglePassword;
-  final VoidCallback onSubmit;
+class _LabeledField extends StatelessWidget {
+  final String label;
+  final Widget child;
 
-  const _FormCard({
-    required this.emailController,
-    required this.passwordController,
-    required this.passwordFocusNode,
-    required this.obscurePassword,
-    required this.isLoading,
-    required this.errorMessage,
-    required this.onTogglePassword,
-    required this.onSubmit,
-  });
+  const _LabeledField({required this.label, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: emailController,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              autocorrect: false,
-              enabled: !isLoading,
-              onSubmitted: (_) =>
-                  FocusScope.of(context).requestFocus(passwordFocusNode),
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                hintText: 'operator@example.com',
-                prefixIcon: Icon(Icons.email_outlined),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: passwordController,
-              focusNode: passwordFocusNode,
-              obscureText: obscurePassword,
-              textInputAction: TextInputAction.done,
-              enabled: !isLoading,
-              onSubmitted: (_) => onSubmit(),
-              decoration: InputDecoration(
-                labelText: 'Password',
-                prefixIcon: const Icon(Icons.lock_outline),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    obscurePassword
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                  ),
-                  onPressed: isLoading ? null : onTogglePassword,
-                ),
-              ),
-            ),
-            if (errorMessage != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                errorMessage!,
-                style: const TextStyle(color: Color(0xFFb3321b), fontSize: 13),
-                textAlign: TextAlign.center,
-              ),
-            ],
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: isLoading ? null : onSubmit,
-              child: isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Text('Sign In'),
-            ),
-          ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF6b5d48),
+          ),
         ),
-      ),
+        const SizedBox(height: 6),
+        child,
+      ],
     );
   }
 }
