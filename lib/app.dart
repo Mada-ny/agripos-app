@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'core/constants/app_constants.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
+import 'features/farmers/screens/farmer_account_screen.dart';
 import 'features/farmers/screens/farmer_search_screen.dart';
 
 part 'app.g.dart';
@@ -56,8 +57,9 @@ GoRouter router(Ref ref) {
       ),
       GoRoute(
         path: '/farmers/:id',
-        builder: (context, state) =>
-            _Placeholder('Farmer ${state.pathParameters['id']}'),
+        builder: (context, state) => FarmerAccountScreen(
+          farmerId: int.parse(state.pathParameters['id']!),
+        ),
       ),
       GoRoute(
         path: '/products',

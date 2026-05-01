@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/api/dio_client.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../features/auth/providers/auth_provider.dart';
+import 'debt.dart';
 import 'farmer.dart';
 
 part 'farmer_repository.g.dart';
@@ -27,20 +28,41 @@ class FarmerRepository {
           .map((j) => Farmer.fromJson(j as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
-      if (e.response != null) {
-        final body = e.response!.data;
-        final message = (body is Map && body['message'] is String)
-            ? body['message'] as String
-            : 'Failed to load farmers.';
-        throw AppException(
-          message: message,
-          statusCode: e.response!.statusCode,
-        );
-      }
-      throw const AppException(
-        message: 'Connection error. Check your network.',
-      );
+      throw _toAppException(e, 'Failed to load farmers.');
     }
+  }
+
+  Future<Farmer> getFarmer(int id) async {
+    try {
+      final response = await _client.dio.get('/api/v1/farmers/$id');
+      final data =
+          (response.data as Map<String, dynamic>)['data']
+              as Map<String, dynamic>;
+      return Farmer.fromJson(data);
+    } on DioException catch (e) {
+      throw _toAppException(e, 'Failed to load farmer.');
+    }
+  }
+
+  Future<List<Debt>> getFarmerDebts(int farmerId) async {
+    try {
+      final response = await _client.dio.get('/api/v1/farmers/$farmerId/debts');
+      final data = (response.data as Map<String, dynamic>)['data'] as List;
+      return data.map((j) => Debt.fromJson(j as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw _toAppException(e, 'Failed to load debts.');
+    }
+  }
+
+  AppException _toAppException(DioException e, String fallback) {
+    if (e.response != null) {
+      final body = e.response!.data;
+      final message = (body is Map && body['message'] is String)
+          ? body['message'] as String
+          : fallback;
+      return AppException(message: message, statusCode: e.response!.statusCode);
+    }
+    return const AppException(message: 'Connection error. Check your network.');
   }
 }
 
