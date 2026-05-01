@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'core/constants/app_constants.dart';
 import 'features/auth/providers/auth_provider.dart';
+import 'features/auth/screens/login_screen.dart';
 
 part 'app.g.dart';
 
@@ -46,7 +47,7 @@ GoRouter router(Ref ref) {
     refreshListenable: notifier,
     redirect: notifier.redirect,
     routes: [
-      GoRoute(path: '/login', builder: (_, _) => const _Placeholder('Login')),
+      GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
       GoRoute(
         path: '/farmers',
         builder: (_, _) => const _Placeholder('Farmer Search'),
