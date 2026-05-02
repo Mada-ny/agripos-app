@@ -76,12 +76,7 @@ class ProductBrowserScreen extends ConsumerWidget {
           color: Color(0xFF231a10),
         ),
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.search, color: Color(0xFF231a10)),
-          onPressed: () {},
-        ),
-      ],
+      actions: [],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
         child: Container(height: 1, color: const Color(0xFFe3d8c2)),

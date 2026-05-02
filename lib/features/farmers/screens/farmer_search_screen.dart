@@ -124,35 +124,33 @@ class _FarmerSearchScreenState extends ConsumerState<FarmerSearchScreen> {
         ],
       ),
       actions: [
-        PopupMenuButton<String>(
-          icon: const Icon(Icons.more_horiz, color: Color(0xFF231a10)),
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          onSelected: (value) {
-            if (value == 'logout') {
-              ref.read(authNotifierProvider.notifier).logout();
-            }
-          },
-          itemBuilder: (_) => [
-            const PopupMenuItem(
-              value: 'logout',
-              child: Row(
-                children: [
-                  Icon(Icons.logout, size: 18, color: Color(0xFFb3321b)),
-                  SizedBox(width: 10),
-                  Text(
-                    'Sign out',
-                    style: TextStyle(
-                      color: Color(0xFFb3321b),
-                      fontWeight: FontWeight.w500,
+        IconButton(
+          icon: const Icon(Icons.logout, color: Color(0xFFb3321b)),
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Sign out'),
+                content: const Text('Are you sure you want to sign out?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      ref.read(authNotifierProvider.notifier).logout();
+                    },
+                    child: const Text(
+                      'Sign out',
+                      style: TextStyle(color: Color(0xFFb3321b)),
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
+            );
+          },
         ),
       ],
       bottom: PreferredSize(
