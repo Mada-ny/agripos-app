@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../features/auth/providers/auth_provider.dart';
 import '../../../shared/utils/format.dart';
 import '../data/farmer.dart';
 import '../providers/farmers_provider.dart';
@@ -123,9 +124,35 @@ class _FarmerSearchScreenState extends ConsumerState<FarmerSearchScreen> {
         ],
       ),
       actions: [
-        IconButton(
+        PopupMenuButton<String>(
           icon: const Icon(Icons.more_horiz, color: Color(0xFF231a10)),
-          onPressed: () {},
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          onSelected: (value) {
+            if (value == 'logout') {
+              ref.read(authNotifierProvider.notifier).logout();
+            }
+          },
+          itemBuilder: (_) => [
+            const PopupMenuItem(
+              value: 'logout',
+              child: Row(
+                children: [
+                  Icon(Icons.logout, size: 18, color: Color(0xFFb3321b)),
+                  SizedBox(width: 10),
+                  Text(
+                    'Sign out',
+                    style: TextStyle(
+                      color: Color(0xFFb3321b),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
       bottom: PreferredSize(
