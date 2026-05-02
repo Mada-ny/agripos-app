@@ -182,18 +182,62 @@ class _RecordRepaymentScreenState extends ConsumerState<RecordRepaymentScreen> {
       ),
     );
   }
+}
 
-  Widget _sectionLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        color: Color(0xFFa89a82),
-        letterSpacing: 0.5,
+Widget _sectionLabel(String text) {
+  return Text(
+    text,
+    style: const TextStyle(
+      fontSize: 11,
+      fontWeight: FontWeight.w600,
+      color: Color(0xFFa89a82),
+      letterSpacing: 0.5,
+    ),
+  );
+}
+
+// ── Shared input card shell ───────────────────────────────────────────────────
+
+class _InputCard extends StatelessWidget {
+  final bool focused;
+  final Widget child;
+
+  const _InputCard({required this.focused, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: focused ? const Color(0xFF2d5d3a) : const Color(0xFFe3d8c2),
+          width: focused ? 2 : 1,
+        ),
       ),
+      child: child,
     );
   }
+}
+
+InputDecoration _numericInputDecoration(String hint) {
+  return InputDecoration(
+    border: InputBorder.none,
+    enabledBorder: InputBorder.none,
+    focusedBorder: InputBorder.none,
+    filled: false,
+    isCollapsed: true,
+    contentPadding: EdgeInsets.zero,
+    hintText: hint,
+    hintStyle: const TextStyle(
+      fontSize: 40,
+      fontWeight: FontWeight.w700,
+      color: Color(0xFFcbbd9f),
+      height: 1,
+    ),
+  );
 }
 
 // ── Rate input card ───────────────────────────────────────────────────────────
@@ -233,7 +277,7 @@ class _RateCard extends StatelessWidget {
                     letterSpacing: 0.5,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 TextField(
                   controller: controller,
                   focusNode: focusNode,
@@ -247,18 +291,12 @@ class _RateCard extends StatelessWidget {
                     color: Color(0xFF231a10),
                     height: 1,
                   ),
-                  decoration: const InputDecoration.collapsed(
-                    hintText: '0',
-                    hintStyle: TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFFcbbd9f),
-                    ),
-                  ),
+                  decoration: _numericInputDecoration('0'),
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 12),
           const Text(
             'FCFA / kg',
             style: TextStyle(
@@ -299,7 +337,7 @@ class _WeightCard extends StatelessWidget {
       child: Column(
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
                 child: Column(
@@ -314,44 +352,64 @@ class _WeightCard extends StatelessWidget {
                         letterSpacing: 0.5,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    TextField(
-                      controller: controller,
-                      focusNode: focusNode,
-                      enabled: enabled,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                          RegExp(r'^\d*\.?\d*'),
+                    const SizedBox(height: 6),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: controller,
+                            focusNode: focusNode,
+                            enabled: enabled,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'^\d*\.?\d*'),
+                              ),
+                            ],
+                            onChanged: onChanged,
+                            style: const TextStyle(
+                              fontSize: 40,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF231a10),
+                              height: 1,
+                            ),
+                            decoration: _numericInputDecoration('0'),
+                          ),
+                        ),
+                        const Text(
+                          ' kg',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF6b5d48),
+                          ),
                         ),
                       ],
-                      onChanged: onChanged,
-                      style: const TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF231a10),
-                        height: 1,
-                      ),
-                      decoration: const InputDecoration.collapsed(
-                        hintText: '0',
-                        hintStyle: TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFFcbbd9f),
-                        ),
-                      ),
                     ),
                   ],
                 ),
               ),
-              const Text(
-                'kg',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF6b5d48),
+              const SizedBox(width: 12),
+              Container(
+                width: 6,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFdde8d8),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: FractionallySizedBox(
+                  alignment: Alignment.bottomCenter,
+                  heightFactor: controller.text.isEmpty ? 0 : 1,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2d5d3a),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -471,32 +529,6 @@ class _DebtImpactCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-// ── Shared card shell ─────────────────────────────────────────────────────────
-
-class _InputCard extends StatelessWidget {
-  final bool focused;
-  final Widget child;
-
-  const _InputCard({required this.focused, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 150),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: focused ? const Color(0xFF2d5d3a) : const Color(0xFFe3d8c2),
-          width: focused ? 2 : 1,
-        ),
-      ),
-      child: child,
     );
   }
 }
