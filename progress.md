@@ -12,6 +12,13 @@
 | Order Checkout | `/orders/checkout` | Done | #8 |
 | Record Repayment | `/repayments` | Done | #5 |
 
+## Management
+
+| Feature | Status | PR |
+|---------|--------|----|
+| Edit farmer | Done | #11 |
+| Delete farmer | Done | #11 |
+
 ## Foundation
 
 | Layer | Status |

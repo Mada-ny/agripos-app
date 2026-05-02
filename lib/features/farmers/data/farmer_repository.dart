@@ -105,6 +105,42 @@ class FarmerRepository {
     }
   }
 
+  Future<Farmer> updateFarmer({
+    required int id,
+    required String identifier,
+    required String firstname,
+    required String lastname,
+    required String phone,
+    required double creditLimit,
+  }) async {
+    try {
+      final response = await _client.dio.put(
+        '/api/v1/farmers/$id',
+        data: {
+          'identifier': identifier,
+          'firstname': firstname,
+          'lastname': lastname,
+          'phone': phone,
+          'credit_limit': creditLimit,
+        },
+      );
+      final data =
+          (response.data as Map<String, dynamic>)['data']
+              as Map<String, dynamic>;
+      return Farmer.fromJson(data);
+    } on DioException catch (e) {
+      throw _toAppException(e, 'Failed to update farmer.');
+    }
+  }
+
+  Future<void> deleteFarmer(int id) async {
+    try {
+      await _client.dio.delete('/api/v1/farmers/$id');
+    } on DioException catch (e) {
+      throw _toAppException(e, 'Failed to delete farmer.');
+    }
+  }
+
   AppException _toAppException(DioException e, String fallback) {
     if (e.response != null) {
       final body = e.response!.data;
