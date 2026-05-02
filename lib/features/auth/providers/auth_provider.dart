@@ -16,7 +16,7 @@ part 'auth_provider.g.dart';
 DioClient dioClient(Ref ref) {
   return DioClient(
     tokenStorage: ref.watch(tokenStorageProvider),
-    onUnauthorized: () => ref.invalidate(authNotifierProvider),
+    onUnauthorized: () => ref.read(authNotifierProvider.notifier).logout(),
   );
 }
 
