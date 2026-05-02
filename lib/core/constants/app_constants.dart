@@ -2,6 +2,6 @@ class AppConstants {
   AppConstants._();
 
   static const String baseUrl =
-      'http://127.0.0.1:8000'; // TODO: replace with actual API URL
+      'http://127.0.0.1:8000';
   static const String appName = 'AgriPOS';
 }
