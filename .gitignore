@@ -1,3 +1,6 @@
+# Playwright MCP workspace
+.playwright-mcp/
+
 # Miscellaneous
 *.class
 *.log
