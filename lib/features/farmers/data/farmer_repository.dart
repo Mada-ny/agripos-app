@@ -54,13 +54,47 @@ class FarmerRepository {
     }
   }
 
+  Future<Farmer> createFarmer({
+    required String identifier,
+    required String firstname,
+    required String lastname,
+    required String phone,
+    required double creditLimit,
+  }) async {
+    try {
+      final response = await _client.dio.post(
+        '/api/v1/farmers',
+        data: {
+          'identifier': identifier,
+          'firstname': firstname,
+          'lastname': lastname,
+          'phone': phone,
+          'credit_limit': creditLimit,
+        },
+      );
+      final data =
+          (response.data as Map<String, dynamic>)['data']
+              as Map<String, dynamic>;
+      return Farmer.fromJson(data);
+    } on DioException catch (e) {
+      throw _toAppException(e, 'Failed to create farmer.');
+    }
+  }
+
   AppException _toAppException(DioException e, String fallback) {
     if (e.response != null) {
       final body = e.response!.data;
       final message = (body is Map && body['message'] is String)
           ? body['message'] as String
           : fallback;
-      return AppException(message: message, statusCode: e.response!.statusCode);
+      final errors = (body is Map && body['errors'] is Map)
+          ? Map<String, dynamic>.from(body['errors'] as Map)
+          : null;
+      return AppException(
+        message: message,
+        statusCode: e.response!.statusCode,
+        errors: errors,
+      );
     }
     return const AppException(message: 'Connection error. Check your network.');
   }

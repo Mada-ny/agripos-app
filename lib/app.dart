@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'core/constants/app_constants.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
+import 'features/farmers/screens/create_farmer_screen.dart';
 import 'features/farmers/screens/farmer_account_screen.dart';
 import 'features/farmers/screens/farmer_search_screen.dart';
 import 'features/repayments/screens/record_repayment_screen.dart';
@@ -54,7 +55,7 @@ GoRouter router(Ref ref) {
       GoRoute(path: '/farmers', builder: (_, _) => const FarmerSearchScreen()),
       GoRoute(
         path: '/farmers/new',
-        builder: (_, _) => const _Placeholder('Create Farmer'),
+        builder: (_, _) => const CreateFarmerScreen(),
       ),
       GoRoute(
         path: '/farmers/:id',

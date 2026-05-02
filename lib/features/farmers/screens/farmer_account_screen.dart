@@ -101,6 +101,10 @@ class FarmerAccountScreen extends ConsumerWidget {
           onPressed: () {},
         ),
       ],
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Container(height: 1, color: const Color(0xFFe3d8c2)),
+      ),
     );
   }
 }
