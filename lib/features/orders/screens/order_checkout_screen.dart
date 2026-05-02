@@ -260,6 +260,23 @@ Widget _sectionLabel(String text) {
   );
 }
 
+InputDecoration _numericInputDecoration(String hint) {
+  return InputDecoration(
+    border: InputBorder.none,
+    enabledBorder: InputBorder.none,
+    focusedBorder: InputBorder.none,
+    filled: false,
+    isCollapsed: true,
+    contentPadding: EdgeInsets.zero,
+    hintText: hint,
+    hintStyle: const TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w600,
+      color: Color(0xFFa89a82),
+    ),
+  );
+}
+
 // ── Farmer card ───────────────────────────────────────────────────────────────
 
 class _FarmerCard extends StatelessWidget {
@@ -845,13 +862,7 @@ class _InterestRateSelector extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF231a10),
                         ),
-                        decoration: const InputDecoration.collapsed(
-                          hintText: 'custom',
-                          hintStyle: TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFFa89a82),
-                          ),
-                        ),
+                        decoration: _numericInputDecoration('custom'),
                       ),
                     ),
                     const Text(

@@ -20,22 +20,26 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
   final _firstnameController = TextEditingController();
   final _lastnameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _phoneNumberController = TextEditingController();
   final _creditController = TextEditingController();
 
   final _idFocus = FocusNode();
   final _firstnameFocus = FocusNode();
   final _lastnameFocus = FocusNode();
   final _phoneFocus = FocusNode();
+  final _phoneNumberFocus = FocusNode();
   final _creditFocus = FocusNode();
 
   @override
   void initState() {
     super.initState();
+    _phoneController.text = '+225'; // Set the country code
     for (final fn in [
       _idFocus,
       _firstnameFocus,
       _lastnameFocus,
       _phoneFocus,
+      _phoneNumberFocus,
       _creditFocus,
     ]) {
       fn.addListener(() => setState(() {}));
@@ -48,11 +52,13 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
     _firstnameController.dispose();
     _lastnameController.dispose();
     _phoneController.dispose();
+    _phoneNumberController.dispose();
     _creditController.dispose();
     _idFocus.dispose();
     _firstnameFocus.dispose();
     _lastnameFocus.dispose();
     _phoneFocus.dispose();
+    _phoneNumberFocus.dispose();
     _creditFocus.dispose();
     super.dispose();
   }
@@ -60,10 +66,11 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
   bool get _canSubmit {
     final credit =
         double.tryParse(_creditController.text.replaceAll(' ', '')) ?? 0;
+    final phoneNumberDigits = _phoneNumberController.text.replaceAll(' ', '');
     return _idController.text.isNotEmpty &&
         _firstnameController.text.isNotEmpty &&
         _lastnameController.text.isNotEmpty &&
-        _phoneController.text.isNotEmpty &&
+        phoneNumberDigits.length == 10 &&
         credit > 0;
   }
 
@@ -75,7 +82,7 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
           identifier: _idController.text.trim(),
           firstname: _firstnameController.text.trim(),
           lastname: _lastnameController.text.trim(),
-          phone: _phoneController.text.trim(),
+          phone: '+225${_phoneNumberController.text.trim()}',
           creditLimit: double.parse(creditText),
         );
   }
@@ -185,7 +192,7 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
                           focusNode: _firstnameFocus,
                           nextFocus: _lastnameFocus,
                           enabled: !isLoading,
-                          placeholder: 'Adjobi',
+                          placeholder: 'Adjobi Kra',
                           errorText: _fieldError('firstname', submitState),
                           textCapitalization: TextCapitalization.words,
                           context: context,
@@ -199,7 +206,7 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
                           focusNode: _lastnameFocus,
                           nextFocus: _phoneFocus,
                           enabled: !isLoading,
-                          placeholder: 'Kra Kouamé',
+                          placeholder: 'Kouamé',
                           errorText: _fieldError('lastname', submitState),
                           textCapitalization: TextCapitalization.words,
                           context: context,
@@ -210,14 +217,13 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
                   const SizedBox(height: 24),
                   _sectionLabel('CONTACT'),
                   const SizedBox(height: 12),
-                  _LabeledField(
-                    label: 'Phone number',
-                    controller: _phoneController,
-                    focusNode: _phoneFocus,
+                  _PhoneNumberField(
+                    phoneController: _phoneController,
+                    phoneNumberController: _phoneNumberController,
+                    phoneFocus: _phoneFocus,
+                    phoneNumberFocus: _phoneNumberFocus,
                     nextFocus: _creditFocus,
                     enabled: !isLoading,
-                    placeholder: '+225 07 XX XX XX XX',
-                    keyboardType: TextInputType.phone,
                     errorText: _fieldError('phone', submitState),
                     context: context,
                   ),
@@ -423,6 +429,166 @@ class _LabeledField extends StatelessWidget {
             style: const TextStyle(fontSize: 12, color: Color(0xFF6b5d48)),
           ),
         ],
+        if (errorText != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            errorText!,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFFb3321b),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+// ── Phone number field ───────────────────────────────────────────────────────────
+
+class _PhoneNumberField extends StatelessWidget {
+  final TextEditingController phoneController;
+  final TextEditingController phoneNumberController;
+  final FocusNode phoneFocus;
+  final FocusNode phoneNumberFocus;
+  final FocusNode? nextFocus;
+  final bool enabled;
+  final String? errorText;
+  final BuildContext context;
+
+  const _PhoneNumberField({
+    required this.phoneController,
+    required this.phoneNumberController,
+    required this.phoneFocus,
+    required this.phoneNumberFocus,
+    required this.enabled,
+    required this.context,
+    this.nextFocus,
+    this.errorText,
+  });
+
+  @override
+  Widget build(BuildContext _) {
+    final phoneFocused = phoneFocus.hasFocus;
+    final phoneNumberFocused = phoneNumberFocus.hasFocus;
+    final hasError = errorText != null;
+    final anyFocused = phoneFocused || phoneNumberFocused;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Phone number',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF6b5d48),
+            letterSpacing: 0.2,
+          ),
+        ),
+        const SizedBox(height: 6),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: hasError
+                  ? const Color(0xFFb3321b)
+                  : anyFocused
+                  ? const Color(0xFF2d5d3a)
+                  : const Color(0xFFe3d8c2),
+              width: anyFocused || hasError ? 1.5 : 1,
+            ),
+            boxShadow: anyFocused && !hasError
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFFdde8d8),
+                      blurRadius: 0,
+                      spreadRadius: 3,
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            children: [
+              // Country code field
+              SizedBox(
+                width: 80,
+                child: TextField(
+                  controller: phoneController,
+                  focusNode: phoneFocus,
+                  enabled: false, // Always disabled, just shows +225
+                  keyboardType: TextInputType.phone,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF231a10),
+                  ),
+                  decoration: const InputDecoration(
+                    hintText: '+225',
+                    hintStyle: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFFa89a82),
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    filled: false,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
+                  ),
+                ),
+              ),
+              // Separator
+              Container(width: 1, height: 20, color: const Color(0xFFe3d8c2)),
+              // Phone number field
+              Expanded(
+                child: TextField(
+                  controller: phoneNumberController,
+                  focusNode: phoneNumberFocus,
+                  enabled: enabled,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
+                  textInputAction: nextFocus != null
+                      ? TextInputAction.next
+                      : TextInputAction.done,
+                  onSubmitted: nextFocus != null
+                      ? (_) => FocusScope.of(context).requestFocus(nextFocus)
+                      : null,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF231a10),
+                  ),
+                  decoration: const InputDecoration(
+                    hintText: '07 00 00 00 00',
+                    hintStyle: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFFa89a82),
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    filled: false,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
         if (errorText != null) ...[
           const SizedBox(height: 4),
           Text(
