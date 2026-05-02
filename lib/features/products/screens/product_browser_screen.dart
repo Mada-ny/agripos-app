@@ -174,9 +174,9 @@ class ProductBrowserScreen extends ConsumerWidget {
     // If selected category has children, include all subcategory products
     if (category.children.isNotEmpty) {
       final ids = {selectedId, ...category.children.map((c) => c.id)};
-      return products.where((p) => ids.contains(p.category.id)).toList();
+      return products.where((p) => ids.contains(p.category?.id)).toList();
     }
-    return products.where((p) => p.category.id == selectedId).toList();
+    return products.where((p) => p.category?.id == selectedId).toList();
   }
 
   Category? _findCategory(List<Category> categories, int id) {

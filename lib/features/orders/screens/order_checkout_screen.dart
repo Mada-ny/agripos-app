@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../features/farmers/data/farmer.dart';
 import '../../../features/farmers/providers/farmer_account_provider.dart';
+import '../../../features/farmers/providers/farmers_provider.dart';
 import '../../../features/products/providers/cart_provider.dart';
 import '../../../shared/utils/format.dart';
 import '../providers/checkout_provider.dart';
@@ -66,8 +67,10 @@ class _OrderCheckoutScreenState extends ConsumerState<OrderCheckoutScreen> {
       if (previous is AsyncLoading && next is AsyncData && next.value != null) {
         ref.read(cartProvider.notifier).clear();
         ref.invalidate(farmerDetailProvider(widget.farmerId));
+        ref.invalidate(farmerDebtsProvider(widget.farmerId));
+        ref.read(farmerListVersionProvider.notifier).refresh();
         if (context.mounted) {
-          context.pushReplacement('/farmers/${widget.farmerId}');
+          context.go('/farmers/${widget.farmerId}');
         }
       }
     });
