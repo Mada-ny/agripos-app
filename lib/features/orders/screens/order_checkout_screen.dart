@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,7 +23,6 @@ class OrderCheckoutScreen extends ConsumerStatefulWidget {
 class _OrderCheckoutScreenState extends ConsumerState<OrderCheckoutScreen> {
   String _paymentMethod = 'cash';
   int _interestRate = 10;
-  late final int _orderRef;
   late final TextEditingController _customRateController;
 
   bool get _isCustomRate => _customRateController.text.isNotEmpty;
@@ -33,7 +30,6 @@ class _OrderCheckoutScreenState extends ConsumerState<OrderCheckoutScreen> {
   @override
   void initState() {
     super.initState();
-    _orderRef = Random().nextInt(9000) + 1000;
     _customRateController = TextEditingController();
   }
 
@@ -233,7 +229,7 @@ class _OrderCheckoutScreenState extends ConsumerState<OrderCheckoutScreen> {
             ),
           ),
           Text(
-            'Order draft · ORD-$_orderRef',
+            'Order draft',
             style: const TextStyle(fontSize: 12, color: Color(0xFF6b5d48)),
           ),
         ],

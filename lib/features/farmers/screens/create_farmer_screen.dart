@@ -72,7 +72,7 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
         _lastnameController.text.isNotEmpty &&
         phoneNumberDigits.length == 10 &&
         credit > 0;
-    }
+  }
 
   void _submit() {
     final creditText = _creditController.text.replaceAll(' ', '');
