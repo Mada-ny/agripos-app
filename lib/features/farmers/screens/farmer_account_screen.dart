@@ -3,20 +3,150 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/errors/app_exception.dart';
 import '../../../shared/utils/format.dart';
 import '../data/debt.dart';
 import '../data/farmer.dart';
+import '../providers/delete_farmer_provider.dart';
 import '../providers/farmer_account_provider.dart';
+import '../providers/farmers_provider.dart';
 
 class FarmerAccountScreen extends ConsumerWidget {
   final int farmerId;
 
   const FarmerAccountScreen({super.key, required this.farmerId});
 
+  void _showOptions(BuildContext context, WidgetRef ref, Farmer farmer) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFe3d8c2),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.edit_outlined,
+                color: Color(0xFF231a10),
+              ),
+              title: const Text(
+                'Edit farmer',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF231a10),
+                ),
+              ),
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/farmers/${farmer.id}/edit', extra: farmer);
+              },
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.delete_outline,
+                color: Color(0xFFb3321b),
+              ),
+              title: const Text(
+                'Delete farmer',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFFb3321b),
+                ),
+              ),
+              onTap: () {
+                Navigator.of(context).pop();
+                _confirmDelete(context, ref, farmer);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context, WidgetRef ref, Farmer farmer) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text(
+          'Delete farmer?',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF231a10),
+          ),
+        ),
+        content: Text(
+          'This will permanently delete ${farmer.fullName} (${farmer.identifier}) and all associated records. This cannot be undone.',
+          style: const TextStyle(fontSize: 14, color: Color(0xFF6b5d48)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFF6b5d48)),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              ref.read(deleteFarmerNotifierProvider.notifier).delete(farmer.id);
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(
+                color: Color(0xFFb3321b),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final farmerAsync = ref.watch(farmerDetailProvider(farmerId));
     final debtsAsync = ref.watch(farmerDebtsProvider(farmerId));
+    final deleteState = ref.watch(deleteFarmerNotifierProvider);
+
+    ref.listen(deleteFarmerNotifierProvider, (previous, next) {
+      if (previous is AsyncLoading && next is AsyncData) {
+        ref.read(farmerListVersionProvider.notifier).refresh();
+        if (context.mounted) context.go('/farmers');
+      }
+      if (next is AsyncError) {
+        final err = next.error;
+        final message = err is AppException ? err.message : err.toString();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              backgroundColor: const Color(0xFFb3321b),
+            ),
+          );
+        }
+      }
+    });
 
     return farmerAsync.when(
       loading: () => const Scaffold(
@@ -39,6 +169,9 @@ class FarmerAccountScreen extends ConsumerWidget {
           title: 'Account',
           subtitle: farmer.fullName,
           context: context,
+          onMoreTap: deleteState.isLoading
+              ? null
+              : () => _showOptions(context, ref, farmer),
         ),
         body: SingleChildScrollView(
           child: Column(
@@ -61,6 +194,7 @@ class FarmerAccountScreen extends ConsumerWidget {
     required String title,
     required String subtitle,
     BuildContext? context,
+    VoidCallback? onMoreTap,
   }) {
     return AppBar(
       backgroundColor: const Color(0xFFfaf6ef),
@@ -104,7 +238,7 @@ class FarmerAccountScreen extends ConsumerWidget {
       actions: [
         IconButton(
           icon: const Icon(Icons.more_horiz, color: Color(0xFF231a10)),
-          onPressed: () {},
+          onPressed: onMoreTap,
         ),
       ],
       bottom: PreferredSize(

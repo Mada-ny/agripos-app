@@ -5,40 +5,49 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../data/farmer.dart';
-import '../providers/create_farmer_provider.dart';
+import '../providers/edit_farmer_provider.dart';
+import '../providers/farmer_account_provider.dart';
 import '../providers/farmers_provider.dart';
 
-class CreateFarmerScreen extends ConsumerStatefulWidget {
-  const CreateFarmerScreen({super.key});
+class EditFarmerScreen extends ConsumerStatefulWidget {
+  final Farmer farmer;
+
+  const EditFarmerScreen({super.key, required this.farmer});
 
   @override
-  ConsumerState<CreateFarmerScreen> createState() => _CreateFarmerScreenState();
+  ConsumerState<EditFarmerScreen> createState() => _EditFarmerScreenState();
 }
 
-class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
-  final _idController = TextEditingController();
-  final _firstnameController = TextEditingController();
-  final _lastnameController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _phoneNumberController = TextEditingController();
-  final _creditController = TextEditingController();
+class _EditFarmerScreenState extends ConsumerState<EditFarmerScreen> {
+  late final TextEditingController _idController;
+  late final TextEditingController _firstnameController;
+  late final TextEditingController _lastnameController;
+  late final TextEditingController _phoneNumberController;
+  late final TextEditingController _creditController;
 
-  final _idFocus = FocusNode();
   final _firstnameFocus = FocusNode();
   final _lastnameFocus = FocusNode();
-  final _phoneFocus = FocusNode();
   final _phoneNumberFocus = FocusNode();
   final _creditFocus = FocusNode();
 
   @override
   void initState() {
     super.initState();
-    _phoneController.text = '+225'; // Set the country code
+    _idController = TextEditingController(text: widget.farmer.identifier);
+    _firstnameController = TextEditingController(text: widget.farmer.firstname);
+    _lastnameController = TextEditingController(text: widget.farmer.lastname);
+    // Strip +225 prefix for the local number field
+    final localNumber = widget.farmer.phone.startsWith('+225')
+        ? widget.farmer.phone.substring(4)
+        : widget.farmer.phone;
+    _phoneNumberController = TextEditingController(text: localNumber);
+    _creditController = TextEditingController(
+      text: widget.farmer.creditLimit.toInt().toString(),
+    );
+
     for (final fn in [
-      _idFocus,
       _firstnameFocus,
       _lastnameFocus,
-      _phoneFocus,
       _phoneNumberFocus,
       _creditFocus,
     ]) {
@@ -51,13 +60,10 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
     _idController.dispose();
     _firstnameController.dispose();
     _lastnameController.dispose();
-    _phoneController.dispose();
     _phoneNumberController.dispose();
     _creditController.dispose();
-    _idFocus.dispose();
     _firstnameFocus.dispose();
     _lastnameFocus.dispose();
-    _phoneFocus.dispose();
     _phoneNumberFocus.dispose();
     _creditFocus.dispose();
     super.dispose();
@@ -66,19 +72,19 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
   bool get _canSubmit {
     final credit =
         double.tryParse(_creditController.text.replaceAll(' ', '')) ?? 0;
-    final phoneNumberDigits = _phoneNumberController.text.replaceAll(' ', '');
-    return _idController.text.isNotEmpty &&
-        _firstnameController.text.isNotEmpty &&
+    final phoneDigits = _phoneNumberController.text.replaceAll(' ', '');
+    return _firstnameController.text.isNotEmpty &&
         _lastnameController.text.isNotEmpty &&
-        phoneNumberDigits.length == 10 &&
+        phoneDigits.length == 10 &&
         credit > 0;
-    }
+  }
 
   void _submit() {
     final creditText = _creditController.text.replaceAll(' ', '');
     ref
-        .read(createFarmerNotifierProvider.notifier)
+        .read(editFarmerNotifierProvider.notifier)
         .submit(
+          farmerId: widget.farmer.id,
           identifier: _idController.text.trim(),
           firstname: _firstnameController.text.trim(),
           lastname: _lastnameController.text.trim(),
@@ -108,17 +114,16 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final submitState = ref.watch(createFarmerNotifierProvider);
+    final submitState = ref.watch(editFarmerNotifierProvider);
     final isLoading = submitState.isLoading;
 
-    ref.listen(createFarmerNotifierProvider, (previous, next) {
+    ref.listen(editFarmerNotifierProvider, (previous, next) {
       if (previous is AsyncLoading &&
           next is AsyncData<Farmer?> &&
           next.value != null) {
+        ref.invalidate(farmerDetailProvider(widget.farmer.id));
         ref.read(farmerListVersionProvider.notifier).refresh();
-        if (context.mounted) {
-          context.pushReplacement('/farmers/${next.value!.id}');
-        }
+        if (context.mounted) context.pop();
       }
     });
 
@@ -137,11 +142,11 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
           ),
           onPressed: () => context.pop(),
         ),
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'New farmer',
+            const Text(
+              'Edit farmer',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -149,8 +154,8 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
               ),
             ),
             Text(
-              'Fill in the farmer\'s details',
-              style: TextStyle(fontSize: 12, color: Color(0xFF6b5d48)),
+              widget.farmer.fullName,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF6b5d48)),
             ),
           ],
         ),
@@ -172,13 +177,9 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
                   _LabeledField(
                     label: 'Farmer ID',
                     controller: _idController,
-                    focusNode: _idFocus,
-                    nextFocus: _firstnameFocus,
-                    enabled: !isLoading,
-                    placeholder: 'CI-ABJ-00001',
-                    hint: 'Unique identifier assigned to the farmer',
-                    errorText: _fieldError('identifier', submitState),
-                    textCapitalization: TextCapitalization.characters,
+                    enabled: false,
+                    placeholder: widget.farmer.identifier,
+                    hint: 'Unique identifier — cannot be changed',
                     context: context,
                   ),
                   const SizedBox(height: 14),
@@ -192,7 +193,7 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
                           focusNode: _firstnameFocus,
                           nextFocus: _lastnameFocus,
                           enabled: !isLoading,
-                          placeholder: 'Adjobi Kra',
+                          placeholder: 'First name',
                           errorText: _fieldError('firstname', submitState),
                           textCapitalization: TextCapitalization.words,
                           context: context,
@@ -204,9 +205,9 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
                           label: 'Last name',
                           controller: _lastnameController,
                           focusNode: _lastnameFocus,
-                          nextFocus: _phoneFocus,
+                          nextFocus: _phoneNumberFocus,
                           enabled: !isLoading,
-                          placeholder: 'Kouamé',
+                          placeholder: 'Last name',
                           errorText: _fieldError('lastname', submitState),
                           textCapitalization: TextCapitalization.words,
                           context: context,
@@ -217,11 +218,9 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
                   const SizedBox(height: 24),
                   _sectionLabel('CONTACT'),
                   const SizedBox(height: 12),
-                  _PhoneNumberField(
-                    phoneController: _phoneController,
-                    phoneNumberController: _phoneNumberController,
-                    phoneFocus: _phoneFocus,
-                    phoneNumberFocus: _phoneNumberFocus,
+                  _PhoneField(
+                    controller: _phoneNumberController,
+                    focusNode: _phoneNumberFocus,
                     nextFocus: _creditFocus,
                     enabled: !isLoading,
                     errorText: _fieldError('phone', submitState),
@@ -297,7 +296,7 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
 class _LabeledField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
-  final FocusNode focusNode;
+  final FocusNode? focusNode;
   final FocusNode? nextFocus;
   final bool enabled;
   final String placeholder;
@@ -314,10 +313,10 @@ class _LabeledField extends StatelessWidget {
   const _LabeledField({
     required this.label,
     required this.controller,
-    required this.focusNode,
     required this.enabled,
     required this.placeholder,
     required this.context,
+    this.focusNode,
     this.nextFocus,
     this.hint,
     this.errorText,
@@ -331,7 +330,7 @@ class _LabeledField extends StatelessWidget {
 
   @override
   Widget build(BuildContext _) {
-    final focused = focusNode.hasFocus;
+    final focused = focusNode?.hasFocus ?? false;
     final hasError = errorText != null;
 
     return Column(
@@ -350,7 +349,7 @@ class _LabeledField extends StatelessWidget {
         AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: enabled ? Colors.white : const Color(0xFFf3ede2),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: hasError
@@ -362,8 +361,8 @@ class _LabeledField extends StatelessWidget {
             ),
             boxShadow: focused && !hasError
                 ? [
-                    BoxShadow(
-                      color: const Color(0xFFdde8d8),
+                    const BoxShadow(
+                      color: Color(0xFFdde8d8),
                       blurRadius: 0,
                       spreadRadius: 3,
                     ),
@@ -391,10 +390,12 @@ class _LabeledField extends StatelessWidget {
                           ? (_) =>
                                 FocusScope.of(context).requestFocus(nextFocus)
                           : null),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF231a10),
+                    color: enabled
+                        ? const Color(0xFF231a10)
+                        : const Color(0xFF6b5d48),
                   ),
                   decoration: InputDecoration(
                     hintText: placeholder,
@@ -406,6 +407,7 @@ class _LabeledField extends StatelessWidget {
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
                     filled: false,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -445,23 +447,19 @@ class _LabeledField extends StatelessWidget {
   }
 }
 
-// ── Phone number field ───────────────────────────────────────────────────────────
+// ── Phone field ───────────────────────────────────────────────────────────────
 
-class _PhoneNumberField extends StatelessWidget {
-  final TextEditingController phoneController;
-  final TextEditingController phoneNumberController;
-  final FocusNode phoneFocus;
-  final FocusNode phoneNumberFocus;
+class _PhoneField extends StatelessWidget {
+  final TextEditingController controller;
+  final FocusNode focusNode;
   final FocusNode? nextFocus;
   final bool enabled;
   final String? errorText;
   final BuildContext context;
 
-  const _PhoneNumberField({
-    required this.phoneController,
-    required this.phoneNumberController,
-    required this.phoneFocus,
-    required this.phoneNumberFocus,
+  const _PhoneField({
+    required this.controller,
+    required this.focusNode,
     required this.enabled,
     required this.context,
     this.nextFocus,
@@ -470,10 +468,8 @@ class _PhoneNumberField extends StatelessWidget {
 
   @override
   Widget build(BuildContext _) {
-    final phoneFocused = phoneFocus.hasFocus;
-    final phoneNumberFocused = phoneNumberFocus.hasFocus;
+    final focused = focusNode.hasFocus;
     final hasError = errorText != null;
-    final anyFocused = phoneFocused || phoneNumberFocused;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -496,15 +492,15 @@ class _PhoneNumberField extends StatelessWidget {
             border: Border.all(
               color: hasError
                   ? const Color(0xFFb3321b)
-                  : anyFocused
+                  : focused
                   ? const Color(0xFF2d5d3a)
                   : const Color(0xFFe3d8c2),
-              width: anyFocused || hasError ? 1.5 : 1,
+              width: focused || hasError ? 1.5 : 1,
             ),
-            boxShadow: anyFocused && !hasError
+            boxShadow: focused && !hasError
                 ? [
-                    BoxShadow(
-                      color: const Color(0xFFdde8d8),
+                    const BoxShadow(
+                      color: Color(0xFFdde8d8),
                       blurRadius: 0,
                       spreadRadius: 3,
                     ),
@@ -513,44 +509,25 @@ class _PhoneNumberField extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Country code field
-              SizedBox(
-                width: 80,
-                child: TextField(
-                  controller: phoneController,
-                  focusNode: phoneFocus,
-                  enabled: false, // Always disabled, just shows +225
-                  keyboardType: TextInputType.phone,
-                  style: const TextStyle(
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 14,
+                ),
+                child: const Text(
+                  '+225',
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF231a10),
-                  ),
-                  decoration: const InputDecoration(
-                    hintText: '+225',
-                    hintStyle: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFFa89a82),
-                    ),
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    filled: false,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 14,
-                    ),
+                    color: Color(0xFF6b5d48),
                   ),
                 ),
               ),
-              // Separator
               Container(width: 1, height: 20, color: const Color(0xFFe3d8c2)),
-              // Phone number field
               Expanded(
                 child: TextField(
-                  controller: phoneNumberController,
-                  focusNode: phoneNumberFocus,
+                  controller: controller,
+                  focusNode: focusNode,
                   enabled: enabled,
                   keyboardType: TextInputType.phone,
                   inputFormatters: [
@@ -652,9 +629,9 @@ class _ActionBar extends StatelessWidget {
                     color: Colors.white,
                   ),
                 )
-              : const Icon(Icons.person_add_outlined, size: 20),
+              : const Icon(Icons.check_outlined, size: 20),
           label: const Text(
-            'Add farmer',
+            'Save changes',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
         ),
