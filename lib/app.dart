@@ -9,6 +9,7 @@ import 'features/auth/screens/login_screen.dart';
 import 'features/farmers/screens/create_farmer_screen.dart';
 import 'features/farmers/screens/farmer_account_screen.dart';
 import 'features/farmers/screens/farmer_search_screen.dart';
+import 'features/orders/screens/order_checkout_screen.dart';
 import 'features/products/screens/product_browser_screen.dart';
 import 'features/repayments/screens/record_repayment_screen.dart';
 
@@ -75,7 +76,11 @@ GoRouter router(Ref ref) {
       ),
       GoRoute(
         path: '/orders/checkout',
-        builder: (_, _) => const _Placeholder('Order Checkout'),
+        builder: (context, state) {
+          final farmerIdStr = state.uri.queryParameters['farmer_id'];
+          if (farmerIdStr == null) return const _Placeholder('Order Checkout');
+          return OrderCheckoutScreen(farmerId: int.parse(farmerIdStr));
+        },
       ),
       GoRoute(
         path: '/repayments',

@@ -74,7 +74,13 @@ class FarmerAccountScreen extends ConsumerWidget {
                 color: Color(0xFF231a10),
                 size: 22,
               ),
-              onPressed: () => context.pop(),
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/farmers');
+                }
+              },
             )
           : null,
       title: Column(

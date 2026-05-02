@@ -5,7 +5,7 @@ class Product {
   final String name;
   final String description;
   final double price;
-  final Category category;
+  final Category? category;
 
   const Product({
     required this.id,
@@ -20,7 +20,9 @@ class Product {
     name: json['name'] as String,
     description: json['description'] as String,
     price: double.parse(json['price'] as String),
-    category: Category.fromJson(json['category'] as Map<String, dynamic>),
+    category: json['category'] != null
+        ? Category.fromJson(json['category'] as Map<String, dynamic>)
+        : null,
   );
 
   Map<String, dynamic> toJson() => {
@@ -28,6 +30,6 @@ class Product {
     'name': name,
     'description': description,
     'price': price,
-    'category': category.toJson(),
+    'category': category?.toJson(),
   };
 }
