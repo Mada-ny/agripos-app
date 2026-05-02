@@ -201,23 +201,6 @@ class _FarmerList extends StatelessWidget {
                   letterSpacing: 0.5,
                 ),
               ),
-              Row(
-                children: const [
-                  Text(
-                    'A-Z',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF6b5d48),
-                    ),
-                  ),
-                  Icon(
-                    Icons.keyboard_arrow_down,
-                    size: 16,
-                    color: Color(0xFF6b5d48),
-                  ),
-                ],
-              ),
             ],
           ),
         ),

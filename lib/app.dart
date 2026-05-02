@@ -8,6 +8,7 @@ import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/farmers/screens/farmer_account_screen.dart';
 import 'features/farmers/screens/farmer_search_screen.dart';
+import 'features/repayments/screens/record_repayment_screen.dart';
 
 part 'app.g.dart';
 
@@ -71,7 +72,13 @@ GoRouter router(Ref ref) {
       ),
       GoRoute(
         path: '/repayments',
-        builder: (_, _) => const _Placeholder('Record Repayment'),
+        builder: (context, state) {
+          final farmerIdStr = state.uri.queryParameters['farmer_id'];
+          if (farmerIdStr == null) {
+            return const _Placeholder('Record Repayment');
+          }
+          return RecordRepaymentScreen(farmerId: int.parse(farmerIdStr));
+        },
       ),
     ],
   );

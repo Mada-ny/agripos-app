@@ -6,7 +6,7 @@ part of 'farmer_account_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$farmerDetailHash() => r'd52127d3ccc874efcbb6a1f2f8210dc555764662';
+String _$farmerDetailHash() => r'86468cc0e82dd0c71869526bb385aef279a2fa78';
 
 /// Copied from Dart SDK
 class _SystemHash {
