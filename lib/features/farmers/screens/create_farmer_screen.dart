@@ -108,7 +108,7 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
       if (previous is AsyncLoading &&
           next is AsyncData<Farmer?> &&
           next.value != null) {
-        ref.invalidate(farmerListProvider);
+        ref.read(farmerListVersionProvider.notifier).refresh();
         if (context.mounted) {
           context.pushReplacement('/farmers/${next.value!.id}');
         }

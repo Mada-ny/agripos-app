@@ -17,20 +17,44 @@ class FarmerRepository {
 
   Future<List<Farmer>> getFarmers({String? search}) async {
     try {
-      final response = await _client.dio.get(
+      final params = <String, dynamic>{};
+      if (search != null && search.isNotEmpty) params['search'] = search;
+
+      final first = await _client.dio.get(
         '/api/v1/farmers',
-        queryParameters: search != null && search.isNotEmpty
-            ? {'search': search}
-            : null,
+        queryParameters: params.isEmpty ? null : params,
       );
-      final data = (response.data as Map<String, dynamic>)['data'] as List;
-      return data
-          .map((j) => Farmer.fromJson(j as Map<String, dynamic>))
-          .toList();
+      final body = first.data as Map<String, dynamic>;
+      final farmers = _parsePage(body['data'] as List);
+
+      final lastPage =
+          ((body['meta'] as Map<String, dynamic>?)?['last_page'] as int?) ?? 1;
+
+      if (lastPage > 1) {
+        final rest = await Future.wait(
+          List.generate(
+            lastPage - 1,
+            (i) => _client.dio.get(
+              '/api/v1/farmers',
+              queryParameters: {...params, 'page': i + 2},
+            ),
+          ),
+        );
+        for (final r in rest) {
+          farmers.addAll(
+            _parsePage((r.data as Map<String, dynamic>)['data'] as List),
+          );
+        }
+      }
+
+      return farmers;
     } on DioException catch (e) {
       throw _toAppException(e, 'Failed to load farmers.');
     }
   }
+
+  List<Farmer> _parsePage(List raw) =>
+      raw.map((j) => Farmer.fromJson(j as Map<String, dynamic>)).toList();
 
   Future<Farmer> getFarmer(int id) async {
     try {
