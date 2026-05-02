@@ -8,7 +8,7 @@
 | Farmer Search | `/farmers` | Done | #3 |
 | Farmer Account / Debt Detail | `/farmers/:id` | Done | #4 |
 | Create Farmer | `/farmers/new` | Done | #6 |
-| Product Browser | `/products` | Todo | — |
+| Product Browser | `/products` | Done | #7 |
 | Order Checkout | `/orders/checkout` | Todo | — |
 | Record Repayment | `/repayments` | Done | #5 |
 
