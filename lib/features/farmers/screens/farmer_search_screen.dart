@@ -51,8 +51,11 @@ class _FarmerSearchScreenState extends ConsumerState<FarmerSearchScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Color(0xFFe3d8c2))),
+            ),
             child: _SearchBar(
               controller: _searchController,
               hasText: _query.isNotEmpty,
@@ -60,7 +63,6 @@ class _FarmerSearchScreenState extends ConsumerState<FarmerSearchScreen> {
               onClear: _clearSearch,
             ),
           ),
-          const SizedBox(height: 16),
           farmersAsync.when(
             loading: () => const Expanded(
               child: Center(child: CircularProgressIndicator()),
@@ -126,6 +128,10 @@ class _FarmerSearchScreenState extends ConsumerState<FarmerSearchScreen> {
           onPressed: () {},
         ),
       ],
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Container(height: 1, color: const Color(0xFFe3d8c2)),
+      ),
     );
   }
 }
