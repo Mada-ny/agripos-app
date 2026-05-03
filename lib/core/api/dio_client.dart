@@ -12,7 +12,10 @@ class DioClient {
   }) : _dio = Dio(
          BaseOptions(
            baseUrl: AppConstants.baseUrl,
-           headers: const {'Accept': 'application/json'},
+           headers: const {
+            'Accept': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+          },
            connectTimeout: const Duration(seconds: 15),
            receiveTimeout: const Duration(seconds: 15),
          ),
